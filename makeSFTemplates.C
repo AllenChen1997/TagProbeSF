@@ -36,17 +36,17 @@ void makeSFTemplates(TString object, TString algo, TString wp, TString ptrange, 
 
   float intLumi = 1;
   if (whichbit == "04"){
-    f_mc   = TFile::Open("/afs/cern.ch/user/c/cmantill/public/forSangEon/bits04-vbf/PseudoData.root" , "READONLY" );
-    f_data = TFile::Open("/afs/cern.ch/user/c/cmantill/public/forSangEon/bits04-vbf/Data.root" , "READONLY" );
+    f_mc   = TFile::Open("./MC.root" , "READONLY" );
+    f_data = TFile::Open("./Data.root" , "READONLY" );
     intLumi     = 41.1;
   }
-  else if (whichbit == "05"){
+ /* else if (whichbit == "05"){
     f_mc   = TFile::Open("/afs/cern.ch/user/c/cmantill/public/forSangEon/bits05-vbf/PseudoData.root" , "READONLY" );
     f_data = TFile::Open("/afs/cern.ch/user/c/cmantill/public/forSangEon/bits05-vbf/Data.root" , "READONLY" );
     intLumi     = 59.0;
-  }
+  }*/
   else{
-    perror("enter either 04 or 05 for bit version");
+    perror("enter either 04 or for bit version");
   }
 
   TTree *t_mc   = (TTree*)f_mc->Get("otree2");
@@ -86,6 +86,9 @@ void makeSFTemplates(TString object, TString algo, TString wp, TString ptrange, 
   TString c_p2 = "( Puppijet0_vMatching < 0.8 && (Puppijet0_isHadronicV==1 ||Puppijet0_isHadronicV==2) && Puppijet0_vMatching > 0.)";
   TString c_p1 = "(!("+c_p2+"))";
 
+  TString c_MC_p2 = "( Puppijet0_Matching == 2 )";
+  TString c_MC_p1 = "( Puppijet0_Matching == 4 )";
+  
   // final set of cuts (algo + mass + pt)
   TString cut = c_algo_wp+" && "+c_mass+" && "+c_ptrange; std::cout << cut << "\n";
   //TString cut = c_algo_wp+" && "+c_ptrange; std::cout << cut << "\n";
@@ -93,6 +96,8 @@ void makeSFTemplates(TString object, TString algo, TString wp, TString ptrange, 
   cuts.push_back(cut);
   cuts.push_back(cut+" && "+c_p2);
   cuts.push_back(cut+" && "+c_p1);
+  cuts.push_back(cut+" && "+c_MC_p2);//cuts[3]
+  cuts.push_back(cut+" && "+c_MC_p1);//cuts[4]
 
   std::vector<TString> leg_sample; leg_sample.clear();
   leg_sample.push_back("matched");
@@ -101,21 +106,21 @@ void makeSFTemplates(TString object, TString algo, TString wp, TString ptrange, 
 
   // create histos
     TH1D *h_incl = create1Dhisto(name,samples[0],lumi,cuts[0],"Puppijet0_msd",bins,xmin,xmax,false,1,1,"h_"+name+"_incl",false,false);      h_incl->SetFillColor(0);
-  TH1D *h_p2   = create1Dhisto(name,samples[0],lumi,cuts[1],"Puppijet0_msd",bins,xmin,xmax,false,kRed+1,1,"catp2",false,false);   h_p2->SetFillColor(0);
-  TH1D *h_p1   = create1Dhisto(name,samples[0],lumi,cuts[2],"Puppijet0_msd",bins,xmin,xmax,false,kGreen-1,1,"catp1",false,false); h_p1->SetFillColor(0);
+  TH1D *h_p2   = create1Dhisto(name,samples[0],lumi,cuts[3],"Puppijet0_msd",bins,xmin,xmax,false,kRed+1,1,"catp2",false,false);   h_p2->SetFillColor(0);
+  TH1D *h_p1   = create1Dhisto(name,samples[0],lumi,cuts[4],"Puppijet0_msd",bins,xmin,xmax,false,kGreen-1,1,"catp1",false,false); h_p1->SetFillColor(0);
 
   TH1D *h_data = create1Dhisto(name,samples[1],lumi,cuts[0],"Puppijet0_msd",bins,xmin,xmax,false,1,1,"data_obs",false,true); h_data->SetFillColor(0);
   h_data->SetMarkerColor(1); h_data->SetMarkerSize(1.2); h_data->SetMarkerStyle(20);
   h_data->SetLineWidth(1);
 
   // scale systematics
-  TH1D *h_p2_scalecentral = createShifthisto(name,samples[0],intLumi,cuts[1],
+  TH1D *h_p2_scalecentral = createShifthisto(name,samples[0],intLumi,cuts[3],
 					     0,
 					     bins,xmin,xmax,kRed+1,1,"catp2_central",false,false); h_p2_scalecentral->SetFillColor(0);
-  TH1D *h_p2_scaleup = createShifthisto(name,samples[0],intLumi,cuts[1],
+  TH1D *h_p2_scaleup = createShifthisto(name,samples[0],intLumi,cuts[3],
 					scalesf,
 					bins,xmin,xmax,kRed+1,1,"catp2_scaleUp",false,false); h_p2_scaleup->SetFillColor(0);
-  TH1D *h_p2_scaledn = createShifthisto(name,samples[0],intLumi,cuts[1],
+  TH1D *h_p2_scaledn = createShifthisto(name,samples[0],intLumi,cuts[3],
 					-scalesf,
 					bins,xmin,xmax,kRed+1,1,"catp2_scaleDown",false,false); h_p2_scaledn->SetFillColor(0);
   std::cout << "central " << h_p2_scalecentral->Integral() << " up " <<h_p2_scaleup->Integral() << " dn " << h_p2_scaledn->Integral() << std::endl;
@@ -125,10 +130,10 @@ void makeSFTemplates(TString object, TString algo, TString wp, TString ptrange, 
   //std::cout << "new central " << h_p2_scalecentral->Integral() << " up " <<h_p2_scaleup->Integral() << " dn " << h_p2_scaledn->Integral() << std::endl;
 
   //pileup systematics
-  TH1D *h_p2_puup = create1Dhisto(name,samples[0],lumi,cuts[1],"Puppijet0_msd",bins,xmin,xmax,false,kRed+1,1,"catp2_puUp",false,false);   h_p2_puup->SetFillColor(0);
-  TH1D *h_p1_puup = create1Dhisto(name,samples[0],lumi,cuts[2],"Puppijet0_msd",bins,xmin,xmax,false,kGreen-1,1,"catp1_puUp",false,false); h_p1_puup->SetFillColor(0);
-  TH1D *h_p2_pudn = create1Dhisto(name,samples[0],lumi,cuts[1],"Puppijet0_msd",bins,xmin,xmax,false,kRed+1,1,"catp2_puDown",false,false);   h_p2_pudn->SetFillColor(0);
-  TH1D *h_p1_pudn = create1Dhisto(name,samples[0],lumi,cuts[2],"Puppijet0_msd",bins,xmin,xmax,false,kGreen-1,1,"catp1_puDown",false,false); h_p1_pudn->SetFillColor(0);
+  TH1D *h_p2_puup = create1Dhisto(name,samples[0],lumi,cuts[3],"Puppijet0_msd",bins,xmin,xmax,false,kRed+1,1,"catp2_puUp",false,false);   h_p2_puup->SetFillColor(0);
+  TH1D *h_p1_puup = create1Dhisto(name,samples[0],lumi,cuts[4],"Puppijet0_msd",bins,xmin,xmax,false,kGreen-1,1,"catp1_puUp",false,false); h_p1_puup->SetFillColor(0);
+  TH1D *h_p2_pudn = create1Dhisto(name,samples[0],lumi,cuts[3],"Puppijet0_msd",bins,xmin,xmax,false,kRed+1,1,"catp2_puDown",false,false);   h_p2_pudn->SetFillColor(0);
+  TH1D *h_p1_pudn = create1Dhisto(name,samples[0],lumi,cuts[4],"Puppijet0_msd",bins,xmin,xmax,false,kGreen-1,1,"catp1_puDown",false,false); h_p1_pudn->SetFillColor(0);
 
   // avoid zero bins in mc
   for (unsigned int ii=0; ii<h_incl->GetNbinsX(); ++ii) {
