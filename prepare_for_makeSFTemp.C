@@ -16,10 +16,10 @@
 
 // the options in this code
 bool rune = true;
-bool runmu = true;
+bool runmu = false;
 string inputfile = "./list.txt";
-string cutname="./TH3_output.root"
-string outputfile = "MC.txt";
+string cutname="./TH3_output.root";
+string outputfile = "MC.root";
 // the def. in cut histo.
 
 #define pt_r1 200
@@ -79,7 +79,7 @@ void runcut(string inputname, string branchname, TH2D* hcut, TTree& tree, float&
 void prepare_for_makeSFTemp(string inputname = inputfile, string outputname = outputfile){
 	if (! gSystem->AccessPathName((TString)outputname)){
 		cout << "file exist! please check the directory ./" << endl;
-		exit 0;
+		exit(0);
 	}
 	TFile* fcut = new TFile((TString)cutname,"READ");
 	TH2D* h_cut = (TH2D*) fcut->Get("h_pt_rho");

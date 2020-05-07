@@ -86,7 +86,7 @@ void makeSFTemplates(TString object, TString algo, TString wp, TString ptrange, 
   TString c_p2 = "( Puppijet0_vMatching < 0.8 && (Puppijet0_isHadronicV==1 ||Puppijet0_isHadronicV==2) && Puppijet0_vMatching > 0.)";
   TString c_p1 = "(!("+c_p2+"))";
 
-  TString c_MC_p2 = "( Puppijet0_Matching == 2 )";
+  TString c_MC_p2 = "( Puppijet0_Matching == 2 || Puppijet0_Matching == 3 )";
   TString c_MC_p1 = "( Puppijet0_Matching == 4 )";
   
   // final set of cuts (algo + mass + pt)
