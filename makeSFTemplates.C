@@ -11,6 +11,8 @@
 #include "TVectorF.h"
 #include <cstdlib>
 
+float xs_ttlep = 687.1*0.105;
+
 TH1D *create1Dhisto(TString sample, TTree *tree,TString intLumi,TString cuts,TString branch,int bins,float xmin,float xmax,
 		    bool useLog,int color, int style,TString name,bool norm,bool data);
 TH1D *createShifthisto(TString sample,TTree *tree,float intLumi,TString cuts,
@@ -32,13 +34,15 @@ void makeSFTemplates(TString object, TString algo, TString wp, TString ptrange, 
   gStyle->SetPalette(1);
   TH1::SetDefaultSumw2(kTRUE);
   std::cout << whichbit << std::endl;
-  TFile *f_mc, *f_data;
+  TFile *f_mc, *f_data, *f_toplep;
 
   float intLumi = 1;
   if (whichbit == "04"){
     f_mc   = TFile::Open("./MC.root" , "READONLY" );
     f_data = TFile::Open("./Data.root" , "READONLY" );
-    intLumi     = 41.1;
+	// add for substraction
+	f_toplep = TFile::Open("./MC_2e2mu.root","READONLY");
+    intLumi     = 41.5;
   }
  /* else if (whichbit == "05"){
     f_mc   = TFile::Open("/afs/cern.ch/user/c/cmantill/public/forSangEon/bits05-vbf/PseudoData.root" , "READONLY" );
@@ -51,10 +55,12 @@ void makeSFTemplates(TString object, TString algo, TString wp, TString ptrange, 
 
   TTree *t_mc   = (TTree*)f_mc->Get("otree2");
   TTree *t_data = (TTree*)f_data->Get("otree2");
+  TTree *t_toplep = (TTree*)f_toplep->Get("otree2");
   
   std::vector<TTree *> samples; samples.clear();
   samples.push_back(t_mc);
   samples.push_back(t_data);
+  samples.push_back(t_toplep);
 
   ostringstream tmpLumi;
   tmpLumi << intLumi;
@@ -105,14 +111,19 @@ void makeSFTemplates(TString object, TString algo, TString wp, TString ptrange, 
   leg_sample.push_back("Data");
 
   // create histos
-    TH1D *h_incl = create1Dhisto(name,samples[0],lumi,cuts[0],"Puppijet0_msd",bins,xmin,xmax,false,1,1,"h_"+name+"_incl",false,false);      h_incl->SetFillColor(0);
-  TH1D *h_p2   = create1Dhisto(name,samples[0],lumi,cuts[3],"Puppijet0_msd",bins,xmin,xmax,false,kRed+1,1,"catp2",false,false);   h_p2->SetFillColor(0);
-  TH1D *h_p1   = create1Dhisto(name,samples[0],lumi,cuts[4],"Puppijet0_msd",bins,xmin,xmax,false,kGreen-1,1,"catp1",false,false); h_p1->SetFillColor(0);
+    TH1D *h_incl = create1Dhisto(name,samples[0],lumi,cuts[0],"Puppijet0_msd",bins,xmin,xmax,false,1,1,"h_"+name+"_incl",true,true);      h_incl->SetFillColor(0);
+  TH1D *h_p2   = create1Dhisto(name,samples[0],lumi,cuts[3],"Puppijet0_msd",bins,xmin,xmax,false,kRed+1,1,"catp2",true,true);   h_p2->SetFillColor(0);
+  TH1D *h_p1   = create1Dhisto(name,samples[0],lumi,cuts[4],"Puppijet0_msd",bins,xmin,xmax,false,kGreen-1,1,"catp1",true,true); h_p1->SetFillColor(0);
 
   TH1D *h_data = create1Dhisto(name,samples[1],lumi,cuts[0],"Puppijet0_msd",bins,xmin,xmax,false,1,1,"data_obs",false,true); h_data->SetFillColor(0);
   h_data->SetMarkerColor(1); h_data->SetMarkerSize(1.2); h_data->SetMarkerStyle(20);
   h_data->SetLineWidth(1);
 
+  // add MC to substract
+  TH1D *h_toplep = create1Dhisto(name,samples[2],lumi,cuts[0],"Puppijet0_msd",bins,xmin,xmax,false,1,1,"toplep",false,true); h_toplep->Scale((float)xs_ttlep*intLumi/(float)h_toplep->Integral());
+  
+  h_data->Add(h_toplep,-1);
+  
   // scale systematics
   TH1D *h_p2_scalecentral = createShifthisto(name,samples[0],intLumi,cuts[3],
 					     0,
