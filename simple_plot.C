@@ -5,7 +5,7 @@
 using namespace std;
 
 float lumi = 41.5;
-float xs_semi = 687.1*0.438;
+float xs_semi = 687.1*0.438*1000;
 bool isonlytarget = true;
 
 void run_cut(string inputname,TH1F* & hpass,TH1F* & hfail){

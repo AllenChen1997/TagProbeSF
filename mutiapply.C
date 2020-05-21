@@ -12,7 +12,7 @@ void mutiapply(){
 		string ifilename = (string) filename[i];
 		string ioutputname = (string) outputname[i];
 		cout << ifilename << " " << ioutputname << " " << x << endl;
-		simple_plot(ifilename, ioutputname, x);
+		simple_plot(ifilename, ioutputname, x*1000);
 		i++;
 	}
 }
