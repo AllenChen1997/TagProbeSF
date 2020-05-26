@@ -11,7 +11,10 @@
 #include "TVectorF.h"
 #include <cstdlib>
 
-float xs_ttlep = 687.1*0.105;
+float xs_ttsemi = 687.1*0.438*1000;
+float xs_ttlep = 687.1*0.105*1000;
+float xs_wjet200to400 = 407.9*1000;
+float xs_wjet400to600 = 57.48*1000;
 
 TH1D *create1Dhisto(TString sample, TTree *tree,TString intLumi,TString cuts,TString branch,int bins,float xmin,float xmax,
 		    bool useLog,int color, int style,TString name,bool norm,bool data);
@@ -21,7 +24,7 @@ TH1D *createShifthisto(TString sample,TTree *tree,float intLumi,TString cuts,
                        int color, int style,TString name,bool norm,bool data);
 void setTDRStyle();
 
-void makeSFTemplates(TString object, TString algo, TString wp, TString ptrange, TString whichbit, bool pass, int bins,float xmin,float xmax,float scalesf) {
+void makeSFTemplates(TString object, TString algo, TString wp, TString ptrange, TString whichbit, bool pass, int bins,float xmin,float xmax,float scalesf, bool issubtract) {
 
   TString passstr = "pass"; if (pass) { passstr = "pass"; } else { passstr = "fail"; }
   TString name = object+"_"+algo+"_"+wp+"_"+whichbit+"_"+ptrange+"_"+passstr;
@@ -34,14 +37,16 @@ void makeSFTemplates(TString object, TString algo, TString wp, TString ptrange, 
   gStyle->SetPalette(1);
   TH1::SetDefaultSumw2(kTRUE);
   std::cout << whichbit << std::endl;
-  TFile *f_mc, *f_data, *f_toplep;
+  TFile *f_mc, *f_data, *f_ttlep, *f_wjet200to400, *f_wjet400to600;
 
   float intLumi = 1;
   if (whichbit == "04"){
-    f_mc   = TFile::Open("./MC.root" , "READONLY" );
-    f_data = TFile::Open("./Data.root" , "READONLY" );
+    f_mc   = TFile::Open("./MC_TTsemi.root" , "READONLY" );
+    f_data = TFile::Open("./Data_all_v2.root" , "READONLY" );
 	// add for substraction
-	f_toplep = TFile::Open("./MC_2e2mu.root","READONLY");
+	f_ttlep = TFile::Open("./MC_TT2e2mu.root","READONLY");
+	f_wjet200to400 = TFile::Open("./MC_wjet_HT200to400.root");
+	f_wjet400to600 = TFile::Open("./MC_wjet_HT400to600.root");
     intLumi     = 41.5;
   }
  /* else if (whichbit == "05"){
@@ -55,12 +60,16 @@ void makeSFTemplates(TString object, TString algo, TString wp, TString ptrange, 
 
   TTree *t_mc   = (TTree*)f_mc->Get("otree2");
   TTree *t_data = (TTree*)f_data->Get("otree2");
-  TTree *t_toplep = (TTree*)f_toplep->Get("otree2");
+  TTree *t_ttlep = (TTree*)f_ttlep->Get("otree2");
+  TTree *t_wjet200to400 = (TTree*)f_wjet200to400->Get("otree2");
+  TTree *t_wjet400to600 = (TTree*)f_wjet400to600->Get("otree2");
   
   std::vector<TTree *> samples; samples.clear();
   samples.push_back(t_mc);
   samples.push_back(t_data);
-  samples.push_back(t_toplep);
+  samples.push_back(t_ttlep);//2
+  samples.push_back(t_wjet200to400);//3
+  samples.push_back(t_wjet400to600);//smaples[4]
 
   ostringstream tmpLumi;
   tmpLumi << intLumi;
@@ -111,19 +120,31 @@ void makeSFTemplates(TString object, TString algo, TString wp, TString ptrange, 
   leg_sample.push_back("Data");
 
   // create histos
-    TH1D *h_incl = create1Dhisto(name,samples[0],lumi,cuts[0],"Puppijet0_msd",bins,xmin,xmax,false,1,1,"h_"+name+"_incl",true,true);      h_incl->SetFillColor(0);
-  TH1D *h_p2   = create1Dhisto(name,samples[0],lumi,cuts[3],"Puppijet0_msd",bins,xmin,xmax,false,kRed+1,1,"catp2",true,true);   h_p2->SetFillColor(0);
-  TH1D *h_p1   = create1Dhisto(name,samples[0],lumi,cuts[4],"Puppijet0_msd",bins,xmin,xmax,false,kGreen-1,1,"catp1",true,true); h_p1->SetFillColor(0);
+  TH1F* h_ttsemi_mcweight = (TH1F*) f_mc->Get("mcweight");
+  
+  TH1D *h_incl = create1Dhisto(name,samples[0],lumi,cuts[0],"Puppijet0_msd",bins,xmin,xmax,false,1,1,"h_"+name+"_incl",false,false);  h_incl->SetFillColor(0); h_incl->Scale( (float)intLumi*xs_ttsemi /(float)h_ttsemi_mcweight->Integral() );
+  TH1D *h_p2   = create1Dhisto(name,samples[0],lumi,cuts[3],"Puppijet0_msd",bins,xmin,xmax,false,kRed+1,1,"catp2",false,false);   h_p2->SetFillColor(0); h_p2->Scale( (float)intLumi*xs_ttsemi /(float)h_ttsemi_mcweight->Integral() );
+  TH1D *h_p1   = create1Dhisto(name,samples[0],lumi,cuts[4],"Puppijet0_msd",bins,xmin,xmax,false,kGreen-1,1,"catp1",false,false); h_p1->SetFillColor(0); h_p1->Scale( (float)intLumi*xs_ttsemi /(float)h_ttsemi_mcweight->Integral() );
 
   TH1D *h_data = create1Dhisto(name,samples[1],lumi,cuts[0],"Puppijet0_msd",bins,xmin,xmax,false,1,1,"data_obs",false,true); h_data->SetFillColor(0);
   h_data->SetMarkerColor(1); h_data->SetMarkerSize(1.2); h_data->SetMarkerStyle(20);
   h_data->SetLineWidth(1);
 
   // add MC to substract
-  TH1D *h_toplep = create1Dhisto(name,samples[2],lumi,cuts[0],"Puppijet0_msd",bins,xmin,xmax,false,1,1,"toplep",false,true); h_toplep->Scale((float)xs_ttlep*intLumi/(float)h_toplep->Integral());
-  
-  h_data->Add(h_toplep,-1);
-  
+  if (issubtract){
+		// ttlep //
+	  TH1F* h_ttlep_mcweight = (TH1F*) f_ttlep->Get("mcweight");
+	  TH1D *h_ttlep = create1Dhisto(name,samples[2],lumi,cuts[0],"Puppijet0_msd",bins,xmin,xmax,false,1,1,"toplep",false,false); h_ttlep->Scale((float)xs_ttlep*intLumi/(float)h_ttlep_mcweight->Integral());
+	  h_data->Add(h_ttlep,-1);
+		// w+jet HT 200-400 , 400-600 //
+	  TH1F* h_wjet200to400_mcweight = (TH1F*) f_wjet200to400->Get("mcweight");
+	  TH1D* h_wjet200to400 = create1Dhisto(name,samples[3],lumi,cuts[0],"Puppijet0_msd",bins,xmin,xmax,false,1,1,"wjet200to400",false,false); h_wjet200to400->Scale((float)xs_wjet200to400*intLumi/(float)h_ttlep_mcweight->Integral());
+	  h_data->Add(h_wjet200to400,-1);
+	  
+	  TH1F* h_wjet400to600_mcweight = (TH1F*) f_wjet400to600->Get("mcweight");
+	  TH1D* h_wjet400to600 = create1Dhisto(name,samples[3],lumi,cuts[0],"Puppijet0_msd",bins,xmin,xmax,false,1,1,"wjet400to600",false,false); h_wjet400to600->Scale((float)xs_wjet400to600*intLumi/(float)h_ttlep_mcweight->Integral());
+	  h_data->Add(h_wjet400to600,-1);
+  }
   // scale systematics
   TH1D *h_p2_scalecentral = createShifthisto(name,samples[0],intLumi,cuts[3],
 					     0,
@@ -205,7 +226,7 @@ TH1D *create1Dhisto(TString sample,TTree *tree,TString intLumi,TString cuts,TStr
   if (data) { cut ="("+cuts+")"; } 
   else {
     //cut ="(xsecWeight*puWeight*"+intLumi+")*("+cuts+")";
-    cut ="(weight*"+intLumi+")*("+cuts+")";
+    cut ="(weight)*("+cuts+")";
   }
   
   //std::cout << "cut = " << cut << "\n";

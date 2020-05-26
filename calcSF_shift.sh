@@ -7,6 +7,7 @@ scale=$5
 scaledat=$6
 smear=$7 # by default should be 0.5
 smeardat=$8 # by default should be 0.1
+issubtract=$9 # decide whether do the subtract for data in makeSFTemplate
 
 declare -a ptranges
 ptranges=("incl")
@@ -27,8 +28,8 @@ do
     nbins=20
     xmin=50
     xmax=120
-    cmdpass=$(echo 'makeSFTemplates.C("'${object}'","'${algo}'","'${wp}'","'${ptrange}'","'${whichbit}'",true,'${nbins}','${xmin}','${xmax}','${scale}')')
-    cmdfail=$(echo 'makeSFTemplates.C("'${object}'","'${algo}'","'${wp}'","'${ptrange}'","'${whichbit}'",false,'${nbins}','${xmin}','${xmax}','${scale}')')
+    cmdpass=$(echo 'makeSFTemplates.C("'${object}'","'${algo}'","'${wp}'","'${ptrange}'","'${whichbit}'",true,'${nbins}','${xmin}','${xmax}','${scale}','${issubtract}')')
+    cmdfail=$(echo 'makeSFTemplates.C("'${object}'","'${algo}'","'${wp}'","'${ptrange}'","'${whichbit}'",false,'${nbins}','${xmin}','${xmax}','${scale}','${issubtract}')')
     root -l -q ${cmdpass}
     root -l -q ${cmdfail}
 

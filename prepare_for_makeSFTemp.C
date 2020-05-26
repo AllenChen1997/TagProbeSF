@@ -35,12 +35,12 @@ string outputfile = "MC.root";
 #define Minrho -6
 #define Maxrho -1
 double d = (double)(Maxrho-Minrho)/(double)Nrho; // the width in rho histo.
-
+bool already_sum_total_mcweight = false;
 string branch1 = "monoHbb_Tope_boosted";
 string branch2 = "monoHbb_Topmu_boosted";
 
 using namespace std;
-void runcut(string inputname, string branchname, TH2D* hcut, TTree& tree, float& Puppijet0_N2DDT, float& Puppijet0_Matching,  float& Puppijet0_msd, float& Puppijet0_pt, float& output_weight){  
+void runcut(string inputname, string branchname, TH2D* hcut, TTree& tree, float& Puppijet0_N2DDT, float& Puppijet0_Matching,  float& Puppijet0_msd, float& Puppijet0_pt, float& output_weight, TH1F*& mcweight){  
 	TFile* fin = new TFile((TString)inputname,"READ");
 	TTreeReader myRead((TString)branchname,fin);
 	TTreeReaderValue< Double_t > N2(myRead,"FJetN2b1");
@@ -53,6 +53,13 @@ void runcut(string inputname, string branchname, TH2D* hcut, TTree& tree, float&
 	int N = myRead.GetEntries();
 	int x,y;
 	int i=0;
+	if (! already_sum_total_mcweight){
+		if (mcweight->GetMaximum() == 0 ){
+			mcweight = (TH1F*) h_event->Clone("mcweight");
+		} else{
+			mcweight->Add(h_event);
+		}
+	}
 	while(myRead.Next()){
 		if (*pt >= pt_r1 && *pt < pt_r2 ) y = 1;
 		else if (*pt >= pt_r2 && *pt < pt_r3) y = 2;
@@ -86,6 +93,7 @@ void prepare_for_makeSFTemp(string inputname = inputfile, string outputname = ou
 	
 	// setup output file
 	float Puppijet0_N2DDT, Puppijet0_Matching, Puppijet0_msd, Puppijet0_pt, weight;
+	TH1F* mcweight = new TH1F("","",10,0,10);
 	TFile* fout = new TFile((TString)outputname,"NEW");
 	TTree outTree("otree2","out branches");
 	outTree.Branch("Puppijet0_N2DDT", &Puppijet0_N2DDT);
@@ -93,21 +101,22 @@ void prepare_for_makeSFTemp(string inputname = inputfile, string outputname = ou
 	outTree.Branch("Puppijet0_msd", &Puppijet0_msd);
 	outTree.Branch("Puppijet0_pt", &Puppijet0_pt);
 	outTree.Branch("weight", &weight);
-	
 	// use MC hist list file as input
 	int iMC=0;
 	ifstream fin((TString)inputname);
 	string line;
 	while (getline(fin,line)){
 		if (rune){
-			runcut(line,branch1,h_cut,outTree,Puppijet0_N2DDT, Puppijet0_Matching, Puppijet0_msd, Puppijet0_pt, weight); 
+			runcut(line,branch1,h_cut,outTree,Puppijet0_N2DDT, Puppijet0_Matching, Puppijet0_msd, Puppijet0_pt, weight, mcweight); 
+			already_sum_total_mcweight = true;
 		}
 		if (runmu){
-			runcut(line,branch2,h_cut,outTree,Puppijet0_N2DDT, Puppijet0_Matching, Puppijet0_msd, Puppijet0_pt, weight); 
+			runcut(line,branch2,h_cut,outTree,Puppijet0_N2DDT, Puppijet0_Matching, Puppijet0_msd, Puppijet0_pt, weight, mcweight); 
 		}
+		already_sum_total_mcweight = false;
 	}
-	
-	
+	fout->cd();	
+mcweight->Write();
 	fout->Write();
 	fout->Close();
 	
