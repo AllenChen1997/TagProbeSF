@@ -138,12 +138,32 @@ void makeSFTemplates(TString object, TString algo, TString wp, TString ptrange, 
 	  h_data->Add(h_ttlep,-1);
 		// w+jet HT 200-400 , 400-600 //
 	  TH1F* h_wjet200to400_mcweight = (TH1F*) f_wjet200to400->Get("mcweight");
-	  TH1D* h_wjet200to400 = create1Dhisto(name,samples[3],lumi,cuts[0],"Puppijet0_msd",bins,xmin,xmax,false,1,1,"wjet200to400",false,false); h_wjet200to400->Scale((float)xs_wjet200to400*intLumi/(float)h_ttlep_mcweight->Integral());
+	  TH1D* h_wjet200to400 = create1Dhisto(name,samples[3],lumi,cuts[0],"Puppijet0_msd",bins,xmin,xmax,false,1,1,"wjet200to400",false,false); h_wjet200to400->Scale((float)xs_wjet200to400*intLumi/(float)h_wjet200to400_mcweight->Integral());
 	  h_data->Add(h_wjet200to400,-1);
 	  
 	  TH1F* h_wjet400to600_mcweight = (TH1F*) f_wjet400to600->Get("mcweight");
-	  TH1D* h_wjet400to600 = create1Dhisto(name,samples[3],lumi,cuts[0],"Puppijet0_msd",bins,xmin,xmax,false,1,1,"wjet400to600",false,false); h_wjet400to600->Scale((float)xs_wjet400to600*intLumi/(float)h_ttlep_mcweight->Integral());
+	  TH1D* h_wjet400to600 = create1Dhisto(name,samples[4],lumi,cuts[0],"Puppijet0_msd",bins,xmin,xmax,false,1,1,"wjet400to600",false,false); h_wjet400to600->Scale((float)xs_wjet400to600*intLumi/(float)h_wjet400to600_mcweight->Integral());
 	  h_data->Add(h_wjet400to600,-1);
+	  
+	  
+	  TCanvas* c1 = new TCanvas("c1","c1");
+	  if (h_wjet200to400->GetMaximum() > h_ttlep->GetMaximum() ) h_ttlep->SetMaximum( h_wjet200to400->GetMaximum()*1.2);
+	  if (h_wjet400to600->GetMaximum() > h_ttlep->GetMaximum() ) h_ttlep->SetMaximum(h_wjet400to600->GetMaximum() *1.2);
+	  h_ttlep->SetTitle("");
+	  h_ttlep->SetLineColor(kBlue);
+	  h_ttlep->Draw();
+	  h_wjet200to400->SetLineColor(kRed);
+	  h_wjet200to400->Draw("SAME");
+	  h_wjet400to600->SetLineColor(kBlack);
+	  h_wjet400to600->Draw("SAME");
+	  
+	  TLegend* legend = new TLegend(0.7,0.7,0.9,0.9);
+	  legend->AddEntry(h_ttlep,"TT(lep)","l");
+	  legend->AddEntry(h_wjet200to400,"w+jet(HT200to400)","l");
+	  legend->AddEntry(h_wjet400to600,"w+jet(HT400to600)","l");
+	  legend->Draw();
+	  if (pass)  c1->SaveAs("subtract_MC_pass.png");
+	  else c1->SaveAs("subtract_MC_fail.png");
   }
   // scale systematics
   TH1D *h_p2_scalecentral = createShifthisto(name,samples[0],intLumi,cuts[3],
@@ -215,6 +235,7 @@ void makeSFTemplates(TString object, TString algo, TString wp, TString ptrange, 
 
   fout->Close();
   std::cout << "\n\n";
+  
 }
 
 
