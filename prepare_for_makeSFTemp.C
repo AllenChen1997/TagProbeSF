@@ -103,18 +103,18 @@ void prepare_for_makeSFTemp(string inputname = inputfile, string outputname = ou
 	outTree.Branch("weight", &weight);
 	// use MC hist list file as input
 	int iMC=0;
-	ifstream fin((TString)inputname);
-	string line;
-	while (getline(fin,line)){
+	//ifstream fin((TString)inputname);
+	//string line;
+	//while (getline(fin,line)){
 		if (rune){
-			runcut(line,branch1,h_cut,outTree,Puppijet0_N2DDT, Puppijet0_Matching, Puppijet0_msd, Puppijet0_pt, weight, mcweight); 
+			runcut(inputname,branch1,h_cut,outTree,Puppijet0_N2DDT, Puppijet0_Matching, Puppijet0_msd, Puppijet0_pt, weight, mcweight); 
 			already_sum_total_mcweight = true;
 		}
 		if (runmu){
-			runcut(line,branch2,h_cut,outTree,Puppijet0_N2DDT, Puppijet0_Matching, Puppijet0_msd, Puppijet0_pt, weight, mcweight); 
+			runcut(inputname,branch2,h_cut,outTree,Puppijet0_N2DDT, Puppijet0_Matching, Puppijet0_msd, Puppijet0_pt, weight, mcweight); 
 		}
 		already_sum_total_mcweight = false;
-	}
+	//}
 	fout->cd();	
 mcweight->Write();
 	fout->Write();
