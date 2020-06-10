@@ -23,6 +23,7 @@ using namespace RooFit ;
 TH1F *rescaleXaxis(TH1F *inputhisto, float xmin, float xmax);
 void rescaleXaxis(TGraphAsymmErrors *inputhisto, double xmin, double scale);
 TH1F *getDataMCratio(TGraphAsymmErrors *indata, TH1F *inMC);
+TH1F *getDataMCPull(TGraphAsymmErrors *indata, TH1F *inMC);
 void setTDRStyle();
 void makeDataMCPlotsFromCombine(TString path2file, TString filename, TString score, TString ptrange,TString whichbit, TString category,
                                 float scaleval, float scaledat,
@@ -152,6 +153,9 @@ void makeDataMCPlotsFromCombine(TString path2file, TString filename, TString sco
   
   TH1F *h_r_postfit = getDataMCratio(h_data,h_postfit_total); h_r_postfit->SetName("h_r_postfit_");
   h_r_postfit->SetMarkerColor(1); h_r_postfit->SetLineColor(1);
+  
+  TH1F* h_pull_postfit = getDataMCPull(h_data,h_postfit_total); h_pull_postfit->SetName("h_pull_postfit");
+  h_pull_postfit->SetMarkerColor(1); h_r_postfit->SetLineColor(1);
   
   TLegend* leg = new TLegend(0.70,0.55,1.04,0.86);
   leg->SetFillStyle(0);
@@ -298,7 +302,7 @@ void makeDataMCPlotsFromCombine(TString path2file, TString filename, TString sco
   
   pRatio->cd();
   gPad->SetBottomMargin(0.2);
-  h_r_postfit->GetYaxis()->SetTitleOffset(0.75);
+  /*h_r_postfit->GetYaxis()->SetTitleOffset(0.75);
   h_r_postfit->GetYaxis()->SetTitleSize(0.1);
   h_r_postfit->GetYaxis()->SetLabelSize(0.08);
   h_r_postfit->GetXaxis()->SetTitleSize(0.1);
@@ -306,7 +310,17 @@ void makeDataMCPlotsFromCombine(TString path2file, TString filename, TString sco
   h_r_postfit->GetXaxis()->SetTitle(xaxisname);
   h_r_postfit->GetYaxis()->SetTitle("Data / Post-fit");
   h_r_postfit->GetYaxis()->SetRangeUser(0.01,1.99);
-  h_r_postfit->Draw("P E0");
+  h_r_postfit->Draw("P E0");*/
+  
+  h_pull_postfit->GetYaxis()->SetTitleOffset(0.75);
+  h_pull_postfit->GetYaxis()->SetTitleSize(0.1);
+  h_pull_postfit->GetYaxis()->SetLabelSize(0.08);
+  h_pull_postfit->GetXaxis()->SetTitleSize(0.1);
+  h_pull_postfit->GetXaxis()->SetLabelSize(0.08);
+  h_pull_postfit->GetXaxis()->SetTitle(xaxisname);
+  h_pull_postfit->GetYaxis()->SetTitle("Data - Post-fit / Data error");
+  //h_pull_postfit->GetYaxis()->SetRangeUser(0.01,1.99);
+  h_pull_postfit->Draw("P E0");
   //  h_r_prefit->Draw("HIST sames");
   c->RedrawAxis();
   
@@ -319,8 +333,18 @@ void makeDataMCPlotsFromCombine(TString path2file, TString filename, TString sco
     c->Print(path2file+"/plots_datamc/"+category+"_"+score+"_"+whichbit+"_"+ptrange+"_lin.png");
   }
   //c->Delete();
-
-} // end of makeDataMCPlotsFromCombine
+  /*auto c2 = new TCanvas("c2","c2");
+  h_pull_postfit->GetYaxis()->SetTitleOffset(0.75);
+  h_pull_postfit->GetYaxis()->SetTitleSize(0.1);
+  h_pull_postfit->GetYaxis()->SetLabelSize(0.08);
+  h_pull_postfit->GetXaxis()->SetTitleSize(0.1);
+  h_pull_postfit->GetXaxis()->SetLabelSize(0.08);
+  h_pull_postfit->GetXaxis()->SetTitle(xaxisname);
+  h_pull_postfit->GetYaxis()->SetTitle("Data - Post-fit / Data error");
+  //h_pull_postfit->GetYaxis()->SetRangeUser(0.01,1.99);
+  h_pull_postfit->Draw("P E0");
+  c2->Print(path2file+"/plots_datamc/"+category+"_"+score+"_"+whichbit+"_"+ptrange+"_pull.png");*/
+} // end of makeDataMCPlotsFromCombine 
 
 TH1F *rescaleXaxis(TH1F *inputhisto, float xmin, float xmax) {
   TH1::SetDefaultSumw2(kTRUE);
@@ -391,6 +415,22 @@ TH1F *getDataMCratio(TGraphAsymmErrors *indata, TH1F *inMC) {
   h_ratio->SetLineWidth(2); h_ratio->SetLineStyle(1);
 
   return h_ratio;
+}
+
+TH1F *getDataMCPull(TGraphAsymmErrors *indata, TH1F *inMC) {
+  TH1::SetDefaultSumw2(kTRUE);
+
+  TH1F *h_pull = (TH1F*)inMC->Clone("h_pull");   
+  for (unsigned int i0=0; i0<inMC->GetNbinsX(); ++i0) {
+	float dataerror = (indata->GetEYlow()[i0]+indata->GetEYhigh()[i0])/2.;
+    h_pull->SetBinContent(i0+1, (indata->GetY()[i0]-inMC->GetBinContent(i0) )/dataerror );
+    //h_data->SetBinError(i0+1, (indata->GetEYlow()[i0]+indata->GetEYhigh()[i0])/2.);
+  }
+
+  h_pull->SetMarkerStyle(20); h_pull->SetMarkerSize(1);
+  h_pull->SetLineWidth(2); h_pull->SetLineStyle(1);
+
+  return h_pull;
 }
 
 void getSF(RooFitResult* r, const char *strPar, double &par, double &parerr) {
