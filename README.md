@@ -7,7 +7,7 @@ Code to calculate SF using template fit and combine (in lxplus)
 2. get code
 
 ```
-git clone https://github.com/cmantill/TagProbeSF.git
+git clone https://github.com/AllenChen1997/TagProbeSF.git
 ```
 
 3.  install tagandprobe
@@ -20,7 +20,7 @@ scram b -j 4
 4. run the SF code:
 
 ```
-bash calcSF_shift.sh T n2 hbb 04 1 1 0.05 1
+bash calcSF_shift.sh T n2 hbb 04 1 1 0.05 1 1
 T: WP
 n2: algorithm
 hbb: tag
@@ -29,4 +29,5 @@ hbb: tag
 1: scale * in datacard (if 0 deactivated)
 0.05: smear by (%)
 1: smear * in datacard (if 0 deactivated)
+1: subtract data with other MC
 ```
